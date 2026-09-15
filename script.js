@@ -1,4 +1,4 @@
-// 1. 單字資料庫 (包含所有單字)
+// 1. 單字資料庫
 const wordBank = [
   { eng: "recipe", ch: "食譜(n.)" },
   { eng: "silk", ch: "絲綢(n.)" },
@@ -104,7 +104,7 @@ function initGame() {
 
   shuffle(activeCh);
   updateScoreboard();
-  renderColumns();
+  buildSlotsOnce();
 
   const modal = document.getElementById('result-modal');
   if (modal) modal.classList.add('hidden');
@@ -124,8 +124,8 @@ function updateScoreboard() {
   if (errEl) errEl.textContent = errorScore;
 }
 
-// 6. 渲染欄位
-function renderColumns() {
+// 6. 建立固定 DOM 結構與內部 span 容器
+function buildSlotsOnce() {
   const engColumn = document.getElementById('english-column');
   const chColumn = document.getElementById('chinese-column');
   if (!engColumn || !chColumn) return;
@@ -133,89 +133,133 @@ function renderColumns() {
   engColumn.innerHTML = '';
   chColumn.innerHTML = '';
 
-  activeEng.forEach(word => {
-    const slot = document.createElement('div');
-    slot.className = 'slot fade-in';
-    slot.textContent = word.eng;
-    slot.dataset.type = 'eng';
-    slot.dataset.id = word.id;
-    slot.addEventListener('click', handleEngClick);
-    engColumn.appendChild(slot);
-  });
+  for (let i = 0; i < 5; i++) {
+    const engSlot = document.createElement('div');
+    engSlot.className = 'slot';
+    engSlot.dataset.type = 'eng';
+    engSlot.addEventListener('click', handleEngClick);
 
-  activeCh.forEach(word => {
-    const slot = document.createElement('div');
-    slot.className = 'slot fade-in';
-    slot.textContent = word.ch;
-    slot.dataset.type = 'ch';
-    slot.dataset.id = word.id;
-    slot.addEventListener('click', handleChClick);
-    chColumn.appendChild(slot);
-  });
+    const engSpan = document.createElement('span');
+    engSpan.className = 'slot-text';
+    engSlot.appendChild(engSpan);
+    engColumn.appendChild(engSlot);
+
+    const chSlot = document.createElement('div');
+    chSlot.className = 'slot';
+    chSlot.dataset.type = 'ch';
+    chSlot.addEventListener('click', handleChClick);
+
+    const chSpan = document.createElement('span');
+    chSpan.className = 'slot-text';
+    chSlot.appendChild(chSpan);
+    chColumn.appendChild(chSlot);
+  }
+
+  updateSlotContentsSmoothly(false);
 }
 
-// 7. 點擊英文欄處理
+// 7. 文字層級淡出 / 淡入切換邏輯 (等待時間同步改為 32000ms = 32秒)
+function updateSlotContentsSmoothly(animate = true) {
+  const engSlots = document.querySelectorAll('#english-column .slot');
+  const chSlots = document.querySelectorAll('#chinese-column .slot');
+  const allSpans = document.querySelectorAll('.slot-text');
+
+  const updateTexts = () => {
+    engSlots.forEach((slot, i) => {
+      const span = slot.querySelector('.slot-text');
+      if (activeEng[i]) {
+        span.textContent = activeEng[i].eng;
+        slot.dataset.id = activeEng[i].id;
+        slot.style.visibility = 'visible';
+      } else {
+        slot.style.visibility = 'hidden';
+      }
+      slot.classList.remove('selected', 'wrong');
+    });
+
+    chSlots.forEach((slot, i) => {
+      const span = slot.querySelector('.slot-text');
+      if (activeCh[i]) {
+        span.textContent = activeCh[i].ch;
+        slot.dataset.id = activeCh[i].id;
+        slot.style.visibility = 'visible';
+      } else {
+        slot.style.visibility = 'hidden';
+      }
+      slot.classList.remove('selected', 'wrong');
+    });
+
+    allSpans.forEach(span => span.classList.remove('text-fade-out'));
+  };
+
+  if (animate) {
+    allSpans.forEach(span => span.classList.add('text-fade-out'));
+    setTimeout(updateTexts, 32000);
+  } else {
+    updateTexts();
+  }
+}
+
+// 8. 點擊英文欄
 function handleEngClick(e) {
+  const slot = e.currentTarget;
+  if (slot.style.visibility === 'hidden') return;
   if (selectedEngSlot) {
     selectedEngSlot.classList.remove('selected');
   }
-  selectedEngSlot = e.target;
+  selectedEngSlot = slot;
   selectedEngSlot.classList.add('selected');
   if (selectedChSlot) {
     checkMatch();
   }
 }
 
-// 8. 點擊中文欄處理
+// 9. 點擊中文欄
 function handleChClick(e) {
+  const slot = e.currentTarget;
+  if (slot.style.visibility === 'hidden') return;
   if (selectedChSlot) {
     selectedChSlot.classList.remove('selected');
   }
-  selectedChSlot = e.target;
+  selectedChSlot = slot;
   selectedChSlot.classList.add('selected');
   if (selectedEngSlot) {
     checkMatch();
   }
 }
 
-// 9. 檢查配對
+// 10. 配對邏輯
 function checkMatch() {
   const engId = selectedEngSlot.dataset.id;
   const chId = selectedChSlot.dataset.id;
 
   if (engId === chId) {
-    selectedEngSlot.classList.add('fade-out');
-    selectedChSlot.classList.add('fade-out');
     remainingCount--;
     successScore++;
     updateScoreboard();
 
-    const currentEng = selectedEngSlot;
-    const currentCh = selectedChSlot;
     selectedEngSlot = null;
     selectedChSlot = null;
 
-    setTimeout(() => {
-      const targetId = parseInt(engId, 10);
-      const engIndex = activeEng.findIndex(w => w.id === targetId);
-      const chIndex = activeCh.findIndex(w => w.id === targetId);
+    const targetId = parseInt(engId, 10);
+    const engIndex = activeEng.findIndex(w => w.id === targetId);
+    const chIndex = activeCh.findIndex(w => w.id === targetId);
 
-      if (wordPool.length > 0) {
-        const nextWord = wordPool.pop();
-        if (engIndex !== -1) activeEng[engIndex] = nextWord;
-        if (chIndex !== -1) activeCh[chIndex] = nextWord;
-      } else {
-        if (engIndex !== -1) activeEng.splice(engIndex, 1);
-        if (chIndex !== -1) activeCh.splice(chIndex, 1);
-      }
+    if (wordPool.length > 0) {
+      const nextWord = wordPool.pop();
+      if (engIndex !== -1) activeEng[engIndex] = nextWord;
+      if (chIndex !== -1) activeCh[chIndex] = nextWord;
+    } else {
+      if (engIndex !== -1) activeEng.splice(engIndex, 1);
+      if (chIndex !== -1) activeCh.splice(chIndex, 1);
+    }
 
-      shuffle(activeCh);
-      renderColumns();
+    shuffle(activeCh);
+    updateSlotContentsSmoothly(true);
 
-      if (activeEng.length === 0) {
-        showResult();
-      }
-    }, 500);
+    if (activeEng.length === 0) {
+      setTimeout(showResult, 32000);
+    }
   } else {
     errorScore++;
     updateScoreboard();
@@ -240,7 +284,7 @@ function checkMatch() {
   }
 }
 
-// 10. 顯示結果
+// 11. 結算畫面
 function showResult() {
   const finalSuc = document.getElementById('final-success');
   const finalErr = document.getElementById('final-error');
@@ -291,7 +335,7 @@ function showResult() {
   if (modal) modal.classList.remove('hidden');
 }
 
-// 11. 安全初始化入口
+// 12. 啟動進入點
 function startApp() {
   document.getElementById('restart-btn')?.addEventListener('click', initGame);
   initGame();
