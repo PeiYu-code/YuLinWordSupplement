@@ -1,139 +1,166 @@
-/* 基礎排版 */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
 body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background-color: #f4f7f6;
-    margin: 0;
-    padding: 20px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    min-height: 100vh;
+  background-color: #f4f6f9;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  padding: 20px;
 }
 
 .game-container {
-    background: white;
-    padding: 30px;
-    border-radius: 12px;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-    width: 100%;
-    max-width: 600px;
-    text-align: center;
+  background-color: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+  width: 100%;
+  max-width: 650px;
+  padding: 30px;
+  text-align: center;
 }
 
 h1 {
-    color: #333;
-    margin-bottom: 10px;
+  color: #333;
+  margin-bottom: 20px;
+  font-size: 1.8rem;
 }
 
 .scoreboard {
-    background: #eef2f3;
-    padding: 10px;
-    border-radius: 8px;
-    margin-bottom: 20px;
-    font-size: 1.1rem;
-    color: #555;
+  background-color: #eef2f5;
+  padding: 15px;
+  border-radius: 8px;
+  margin-bottom: 25px;
 }
 
-/* 左右兩欄排版 */
+.score-item {
+  font-size: 1.1rem;
+  color: #555;
+  margin: 5px 0;
+}
+
+.score-item span {
+  font-weight: bold;
+  color: #2c3e50;
+}
+
 .match-area {
-    display: flex;
-    justify-content: space-between;
-    gap: 20px;
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
 }
 
 .column {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 
-/* Slots 樣式 */
 .slot {
-    background: #fff;
-    border: 2px solid #cbd5e1;
-    padding: 15px;
-    border-radius: 8px;
-    cursor: pointer;
-    font-size: 1.1rem;
-    font-weight: 500;
-    transition: all 0.2s ease;
-    user-select: none;
-    text-align: center;
-    min-height: 28px;
+  background-color: #fff;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 14px 10px;
+  min-height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  user-select: none;
+  font-weight: 500;
+  color: #333;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+  transition: border-color 0.2s, background-color 0.2s;
 }
 
 .slot:hover {
-    background: #f8fafc;
-    border-color: #94a3b8;
-    transform: translateY(-2px);
+  border-color: #a0c4ff;
+  background-color: #f8fbff;
 }
 
-/* 點選選取狀態 */
 .slot.selected {
-    background: #e0f2fe;
-    border-color: #38bdf8;
-    color: #0369a1;
+  border-color: #4a90e2;
+  background-color: #eef5ff;
 }
 
-/* 答錯閃爍效果 */
 .slot.wrong {
-    background: #fee2e2;
-    border-color: #f87171;
-    color: #b91c1c;
+  border-color: #e74c3c;
+  background-color: #fdf2f2;
 }
 
-/* 動態動畫效果 */
-.fade-out {
-    opacity: 0;
-    transform: scale(0.9);
-    transition: opacity 0.5s ease, transform 0.5s ease;
-    pointer-events: none; /* 防止淡出時被連點 */
+/* 超超級極緩慢動畫：過渡時間設定為 32 秒 */
+.slot-text {
+  display: inline-block;
+  transition: opacity 32s ease-in-out;
+  opacity: 1;
 }
 
-.fade-in {
-    animation: fadeInAnimation 0.5s forwards;
+.slot-text.text-fade-out {
+  opacity: 0;
 }
 
-@keyframes fadeInAnimation {
-    from { opacity: 0; transform: scale(0.95); }
-    to { opacity: 1; transform: scale(1); }
-}
-
-/* 結束彈出視窗 */
 .modal {
-    position: fixed;
-    top: 0; left: 0; width: 100%; height: 100%;
-    background: rgba(0,0,0,0.5);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 100;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 100;
 }
 
 .modal.hidden {
-    display: none;
+  display: none;
 }
 
 .modal-content {
-    background: white;
-    padding: 40px;
-    border-radius: 12px;
-    text-align: center;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+  background-color: #fff;
+  padding: 30px;
+  border-radius: 12px;
+  width: 90%;
+  max-width: 400px;
+  text-align: center;
 }
 
-#restart-btn {
-    background: #10b981;
-    color: white;
-    border: none;
-    padding: 10px 25px;
-    font-size: 1rem;
-    border-radius: 6px;
-    cursor: pointer;
-    margin-top: 20px;
+.modal-content h2 {
+  margin-bottom: 15px;
+  color: #2c3e50;
 }
 
-#restart-btn:hover {
-    background: #059669;
+.wrong-words-box {
+  margin: 15px 0;
+  text-align: left;
+  background: #fff5f5;
+  padding: 10px;
+  border-radius: 6px;
+  max-height: 150px;
+  overflow-y: auto;
+}
+
+.wrong-words-box ul {
+  padding-left: 20px;
+}
+
+button {
+  background-color: #4a90e2;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  font-size: 1rem;
+  border-radius: 6px;
+  cursor: pointer;
+  margin-top: 15px;
+  transition: background-color 0.2s;
+}
+
+button:hover {
+  background-color: #357abd;
 }
