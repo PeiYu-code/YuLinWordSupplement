@@ -154,7 +154,7 @@ function updateSlotContentsSmoothly(animate = true) {
 
   if (animate) {
     allSpans.forEach(span => span.classList.add('text-fade-out'));
-    setTimeout(updateTexts, 3000); // 3 秒切換
+    setTimeout(updateTexts, 600); // 縮短為 600ms (0.6 秒)
   } else {
     updateTexts();
   }
@@ -208,7 +208,7 @@ function checkMatch() {
     fillSlots();
 
     if (activeEng.length === 0) {
-      setTimeout(showResult, 3000); // 3 秒切換通關畫面
+      setTimeout(showResult, 600); // 縮短為 600ms (0.6 秒)
     } else {
       updateSlotContentsSmoothly(true);
     }
