@@ -108,18 +108,36 @@ function initGame() {
   activeEng = [...initialItems];
   activeCh = shuffle([...initialItems]);
 
-  updateSlotContentsSmoothly(false);
+  // 開局初始化不執行 fade out 動畫，直接渲染
+  updateSlotContentsSmoothly(-1, false);
 
   startTime = Date.now();
   timerInterval = setInterval(updateTimer, 1000);
 }
 
-function updateSlotContentsSmoothly(animate = true) {
+function updateSlotContentsSmoothly(replacedEngIndex = -1, animate = true) {
   const engSlots = document.querySelectorAll('#english-column .slot');
   const chSlots = document.querySelectorAll('#chinese-column .slot');
-  const allSpans = document.querySelectorAll('.slot-text');
+
+  // 定義要觸發 fade 動畫的文字元素 (Span)
+  let fadingSpans = [];
+
+  if (animate) {
+    // 右側全部中文均套用淡入淡出
+    chSlots.forEach(slot => {
+      const span = slot.querySelector('.slot-text');
+      if (span) fadingSpans.push(span);
+    });
+
+    // 左側英文只針對「新替補位置」的文字套用淡入淡出
+    if (replacedEngIndex !== -1 && engSlots[replacedEngIndex]) {
+      const span = engSlots[replacedEngIndex].querySelector('.slot-text');
+      if (span) fadingSpans.push(span);
+    }
+  }
 
   const updateTexts = () => {
+    // 1. 更新左側英文 (維持原位，僅替換指定 Index)
     engSlots.forEach((slot, i) => {
       const span = slot.querySelector('.slot-text');
       if (activeEng[i]) {
@@ -133,6 +151,7 @@ function updateSlotContentsSmoothly(animate = true) {
       slot.classList.remove('selected', 'wrong');
     });
 
+    // 2. 更新右側中文 (全新打亂後的順序)
     chSlots.forEach((slot, i) => {
       const span = slot.querySelector('.slot-text');
       if (activeCh[i]) {
@@ -146,12 +165,15 @@ function updateSlotContentsSmoothly(animate = true) {
       slot.classList.remove('selected', 'wrong');
     });
 
-    allSpans.forEach(span => span.classList.remove('text-fade-out'));
+    // 文字替換後，移除透明度遮罩觸發 Fade In
+    fadingSpans.forEach(span => span.classList.remove('text-fade-out'));
   };
 
-  if (animate) {
-    allSpans.forEach(span => span.classList.add('text-fade-out'));
-    setTimeout(updateTexts, 600); // 保持 0.6 秒淡入淡出
+  if (animate && fadingSpans.length > 0) {
+    // 觸發 Fade Out
+    fadingSpans.forEach(span => span.classList.add('text-fade-out'));
+    // 等待 Fade Out 完成後更換文字，再 Fade In
+    setTimeout(updateTexts, 600);
   } else {
     updateTexts();
   }
@@ -196,16 +218,16 @@ function checkMatch() {
     completedCount++;
     document.getElementById('progress').textContent = `${completedCount} / ${wordBank.length}`;
 
-    // 取得剛配對成功的英文索引位置
+    // 取得配對成功的英文索引
     const engIndex = activeEng.findIndex(item => item && String(item.id) === engId);
 
-    // 從佇列中提取下一個新單字 (若無則補 null)
+    // 抽出一組新單字
     const newItem = currentQueue.length > 0 ? currentQueue.pop() : null;
 
-    // 1. 左側英文：精準替換該項，其他 4 個位置不變
+    // 1. 左側英文：只更新被消除的那格，其他 4 格不變
     activeEng[engIndex] = newItem;
 
-    // 2. 右側中文：移除舊項、加入新項，並打亂順序
+    // 2. 右側中文：扣除舊單字、加入新單字並洗牌
     activeCh = activeCh.filter(item => item && String(item.id) !== chId);
     if (newItem) {
       activeCh.push(newItem);
@@ -215,11 +237,12 @@ function checkMatch() {
     selectedEngSlot = null;
     selectedChSlot = null;
 
-    // 判斷是否所有單字皆已配對完畢 (activeEng 全部為 null)
+    // 若英文全數清空，宣告通關
     if (activeEng.every(item => item === null)) {
       setTimeout(showResult, 600);
     } else {
-      updateSlotContentsSmoothly(true);
+      // 傳入 engIndex，讓系統知道「只有該格英文需要 fade 效果」
+      updateSlotContentsSmoothly(engIndex, true);
     }
   } else {
     selectedEngSlot.classList.add('wrong');
