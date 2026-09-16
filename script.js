@@ -69,8 +69,8 @@ const wordBank = [
 ];
 
 let currentQueue = [];
-let activeEng = [];
-let activeCh = [];
+let activeEng = [null, null, null, null, null];
+let activeCh = [null, null, null, null, null];
 let selectedEngSlot = null;
 let selectedChSlot = null;
 let startTime = 0;
@@ -99,24 +99,19 @@ function initGame() {
   const indexedWords = wordBank.map((item, index) => ({ ...item, id: index }));
   currentQueue = shuffle(indexedWords);
 
-  activeEng = [];
-  activeCh = [];
+  // 初始化前 5 個單字
+  const initialItems = [];
+  for (let i = 0; i < 5 && currentQueue.length > 0; i++) {
+    initialItems.push(currentQueue.pop());
+  }
 
-  fillSlots();
+  activeEng = [...initialItems];
+  activeCh = shuffle([...initialItems]);
+
   updateSlotContentsSmoothly(false);
 
   startTime = Date.now();
   timerInterval = setInterval(updateTimer, 1000);
-}
-
-function fillSlots() {
-  while (activeEng.length < 5 && currentQueue.length > 0) {
-    const item = currentQueue.pop();
-    activeEng.push(item);
-    activeCh.push(item);
-  }
-  activeEng = shuffle(activeEng);
-  activeCh = shuffle(activeCh);
 }
 
 function updateSlotContentsSmoothly(animate = true) {
@@ -133,6 +128,7 @@ function updateSlotContentsSmoothly(animate = true) {
         slot.style.visibility = 'visible';
       } else {
         slot.style.visibility = 'hidden';
+        slot.dataset.id = '';
       }
       slot.classList.remove('selected', 'wrong');
     });
@@ -145,6 +141,7 @@ function updateSlotContentsSmoothly(animate = true) {
         slot.style.visibility = 'visible';
       } else {
         slot.style.visibility = 'hidden';
+        slot.dataset.id = '';
       }
       slot.classList.remove('selected', 'wrong');
     });
@@ -154,7 +151,7 @@ function updateSlotContentsSmoothly(animate = true) {
 
   if (animate) {
     allSpans.forEach(span => span.classList.add('text-fade-out'));
-    setTimeout(updateTexts, 600); // 縮短為 600ms (0.6 秒)
+    setTimeout(updateTexts, 600); // 保持 0.6 秒淡入淡出
   } else {
     updateTexts();
   }
@@ -199,16 +196,28 @@ function checkMatch() {
     completedCount++;
     document.getElementById('progress').textContent = `${completedCount} / ${wordBank.length}`;
 
-    activeEng = activeEng.filter(item => String(item.id) !== engId);
-    activeCh = activeCh.filter(item => String(item.id) !== chId);
+    // 取得剛配對成功的英文索引位置
+    const engIndex = activeEng.findIndex(item => item && String(item.id) === engId);
+
+    // 從佇列中提取下一個新單字 (若無則補 null)
+    const newItem = currentQueue.length > 0 ? currentQueue.pop() : null;
+
+    // 1. 左側英文：精準替換該項，其他 4 個位置不變
+    activeEng[engIndex] = newItem;
+
+    // 2. 右側中文：移除舊項、加入新項，並打亂順序
+    activeCh = activeCh.filter(item => item && String(item.id) !== chId);
+    if (newItem) {
+      activeCh.push(newItem);
+    }
+    activeCh = shuffle(activeCh);
 
     selectedEngSlot = null;
     selectedChSlot = null;
 
-    fillSlots();
-
-    if (activeEng.length === 0) {
-      setTimeout(showResult, 600); // 縮短為 600ms (0.6 秒)
+    // 判斷是否所有單字皆已配對完畢 (activeEng 全部為 null)
+    if (activeEng.every(item => item === null)) {
+      setTimeout(showResult, 600);
     } else {
       updateSlotContentsSmoothly(true);
     }
