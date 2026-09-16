@@ -92,10 +92,10 @@ h1 {
   animation: shake 0.4s ease-in-out;
 }
 
-/* 淡入淡出動畫設定為 3 秒 */
+/* 淡入淡出動畫縮短為 0.6 秒 (原本 3 秒的 1/5) */
 .slot-text {
   display: inline-block;
-  transition: opacity 3s ease-in-out;
+  transition: opacity 0.6s ease-in-out;
   opacity: 1;
 }
 
