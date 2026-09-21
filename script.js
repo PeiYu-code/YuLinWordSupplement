@@ -1,5 +1,5 @@
 // 已填入您的 Google Apps Script Web App 部署 URL
-const GOOGLE_SHEET_URL = 'https://script.google.com/macros/s/AKfycbyKeZWXHyzYzm7KaeSOtb55qASQbN2Dc0ldDO__bnKXtuGOfCoyq3V8wE6b7hyjvs-w/exec';
+const GOOGLE_SHEET_URL = 'https://script.google.com/macros/s/AKfycbxYLpKNLpg_Keau68B-xMg-kZSfm_Z4luO-PcyzWjM0hhhuotfe2KPRHOjD7GVKLq9w/exec';
 
 const wordBank = [
   // --- 第一張圖片 (44 個) ---
