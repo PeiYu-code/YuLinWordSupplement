@@ -1,3 +1,6 @@
+// 已填入您的 Google Apps Script Web App 部署 URL
+const GOOGLE_SHEET_URL = 'https://script.google.com/macros/s/AKfycbyKeZWXHyzYzm7KaeSOtb55qASQbN2Dc0ldDO__bnKXtuGOfCoyq3V8wE6b7hyjvs-w/exec';
+
 const wordBank = [
   // --- 第一張圖片 (44 個) ---
   { eng: 'fossil', ch: '化石、頑固的人(n.)' },
@@ -77,6 +80,10 @@ let startTime = 0;
 let timerInterval = null;
 let completedCount = 0;
 
+// 追蹤答錯相關數據
+let wrongCount = 0;
+let wrongWordsSet = new Set();
+
 function shuffle(array) {
   const arr = [...array];
   for (let i = arr.length - 1; i > 0; i--) {
@@ -89,6 +96,8 @@ function shuffle(array) {
 function initGame() {
   clearInterval(timerInterval);
   completedCount = 0;
+  wrongCount = 0;
+  wrongWordsSet.clear();
   selectedEngSlot = null;
   selectedChSlot = null;
 
@@ -245,12 +254,19 @@ function checkMatch() {
       updateSlotContentsSmoothly(engIndex, true);
     }
   } else {
+    // 答錯時：紀錄錯題數與錯過的英文單字
+    wrongCount++;
+    const wrongWordObj = wordBank[parseInt(engId, 10)];
+    if (wrongWordObj) {
+      wrongWordsSet.add(wrongWordObj.eng);
+    }
+
     selectedEngSlot.classList.add('wrong');
     selectedChSlot.classList.add('wrong');
-    
+
     const eSlot = selectedEngSlot;
     const cSlot = selectedChSlot;
-    
+
     setTimeout(() => {
       eSlot.classList.remove('selected', 'wrong');
       cSlot.classList.remove('selected', 'wrong');
@@ -261,11 +277,41 @@ function checkMatch() {
   }
 }
 
+// 發送詳細數據至 Google Sheets
+function sendResultToGoogleSheet(timeSpent, correctCount, wrongCount, wrongWords) {
+  if (!GOOGLE_SHEET_URL) return;
+
+  const payload = {
+    timestamp: new Date().toLocaleString('zh-TW'), // 學生做測驗的時間
+    timeSpent: timeSpent,                          // 做了多久
+    correctCount: correctCount,                    // 對了幾題
+    wrongCount: wrongCount,                        // 錯了幾題
+    wrongWords: wrongWords                         // 考錯的單字
+  };
+
+  fetch(GOOGLE_SHEET_URL, {
+    method: 'POST',
+    mode: 'no-cors',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(payload)
+  }).catch(error => console.error('Error sending data to Google Sheet:', error));
+}
+
 function showResult() {
   clearInterval(timerInterval);
   const finalTime = document.getElementById('timer').textContent;
   document.getElementById('final-time').textContent = finalTime;
   document.getElementById('result-modal').classList.remove('hidden');
+
+  // 對題數為總題數 (所有單字皆完成配對)
+  const correctCount = wordBank.length;
+  // 將錯字 Set 轉為以逗點分隔的字串
+  const wrongWordsString = wrongWordsSet.size > 0 ? Array.from(wrongWordsSet).join(', ') : '無';
+
+  // 通關時發送資料
+  sendResultToGoogleSheet(finalTime, correctCount, wrongCount, wrongWordsString);
 }
 
 document.addEventListener('DOMContentLoaded', () => {
